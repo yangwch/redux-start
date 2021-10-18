@@ -12,6 +12,7 @@
   <script src="https://unpkg.com/babel-standalone@6.15/babel.min.js"></script>
   <script src="https://tylermcginnis.com/goals-todos-api/index.js"></script>
   <script src="https://unpkg.com/redux-thunk@2.2.0/dist/redux-thunk.min.js"></script>
+  <script src="https://unpkg.com/react-redux@5.0.6/dist/react-redux.min.js"></script>
 </head>
 
 <body>
@@ -315,89 +316,22 @@
       }
     }
 
-    const ConnectedTodos = props => {
-      return (
-        <Context.Consumer>
-          {
-            store => {
-              const { todos } = store.getState();
-              return <Todos todos={todos} dispatch={store.dispatch} />
-            }
-          }
-        </Context.Consumer>
-      )
-    }
+    const ConnectedTodos = ReactRedux.connect((state) => ({
+      todos: state.todos,
+    }))(Todos);
 
-    const ConnectedGoals = props => {
-      return (
-        <Context.Consumer>
-          {
-            store => {
-              const { goals } = store.getState();
-              return <Goals goals={goals} dispatch={store.dispatch} />
-            }
-          }
-        </Context.Consumer>
-      )
-    }
+    const ConnectedGoals = ReactRedux.connect(state => ({
+      goals: state.goals,
+    }))(Goals);
 
-    const Context = React.createContext();
-
-    const connect = mapStateToProps => Component => {
-      class Receiver extends React.Component {
-        componentDidMount() {
-          const { store } = this.props;
-          this.unsubscibe = store.subscribe(() => this.forceUpdate());
-        }
-
-        componentWillUnmount() {
-          this.unsubscibe();
-        }
-
-        render() {
-          const { dispatch, getState } = this.props.store;
-          const stateNeed = mapStateToProps(getState());
-          return (
-            <Component
-              {
-              ...stateNeed
-              }
-              dispatch={dispatch}
-            />
-          );
-        }
-      }
-      return props => {
-        return (
-          <Context.Consumer>
-            {
-              store => {
-                return (
-                  <Receiver store={store} />
-                )
-              }
-            }
-          </Context.Consumer>
-        )
-      }
-    }
-
-    const ConnectedApp = connect((state) => ({
+    const ConnectedApp = ReactRedux.connect((state) => ({
       loading: state.loading,
     }))(App)
 
-    const Provider = props => {
-      return (
-        <Context.Provider value={props.value}>
-          {props.children}
-        </Context.Provider>
-      )
-    }
-
     ReactDOM.render(
-      <Provider value={store}>
+      <ReactRedux.Provider store={store}>
         <ConnectedApp />
-      </Provider>
+      </ReactRedux.Provider>
       , document.getElementById('app'))
   </script>
 </body>
