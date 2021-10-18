@@ -130,7 +130,7 @@
       }
     }
 
-    function handleInitData () {
+    function handleInitData() {
       return dispatch => {
         return Promise.all([
           API.fetchTodos(),
@@ -297,16 +297,12 @@
 
     class App extends React.Component {
       componentDidMount() {
-        const { store } = this.props;
-        
-        store.dispatch(handleInitData())
-
-        store.subscribe(() => this.forceUpdate());
+        const { dispatch } = this.props;
+        dispatch(handleInitData())
       }
 
       render() {
-        // const { store } = this.props;
-        const { loading } = store.getState();
+        const { loading } = this.props;
         if (loading) {
           return <h3>Loading</h3>
         }
@@ -345,19 +341,50 @@
       )
     }
 
-    const ConnecedApp = props => {
-      return (
-        <Context.Consumer>
-          {
-            store => (
-              <App store={store} />
-            )
-          }
-        </Context.Consumer>
-      )
+    const Context = React.createContext();
+
+    const connect = mapStateToProps => Component => {
+      class Receiver extends React.Component {
+        componentDidMount() {
+          const { store } = this.props;
+          this.unsubscibe = store.subscribe(() => this.forceUpdate());
+        }
+
+        componentWillUnmount() {
+          this.unsubscibe();
+        }
+
+        render() {
+          const { dispatch, getState } = this.props.store;
+          const stateNeed = mapStateToProps(getState());
+          return (
+            <Component
+              {
+              ...stateNeed
+              }
+              dispatch={dispatch}
+            />
+          );
+        }
+      }
+      return props => {
+        return (
+          <Context.Consumer>
+            {
+              store => {
+                return (
+                  <Receiver store={store} />
+                )
+              }
+            }
+          </Context.Consumer>
+        )
+      }
     }
 
-    const Context = React.createContext();
+    const ConnectedApp = connect((state) => ({
+      loading: state.loading,
+    }))(App)
 
     const Provider = props => {
       return (
@@ -369,9 +396,9 @@
 
     ReactDOM.render(
       <Provider value={store}>
-        <ConnecedApp />
+        <ConnectedApp />
       </Provider>
-    , document.getElementById('app'))
+      , document.getElementById('app'))
   </script>
 </body>
 
